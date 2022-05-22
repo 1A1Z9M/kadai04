@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>壁打ちチャット</title>
+  <script src="https://kit.fontawesome.com/56550e3b0c.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="css/sample.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
+</head>
+<body>
+  <header>
+    <h1>事業壁打ちチャット
+      <br>~脳内のbossと壁打ち~</br>
+    </h1>
+  </header>
+
+<!-- コンテンツ表示画面 -->
+  <div id="output">
+  </div>
+  <div>
+    <i class="fa-light fa-camera-viewfinder"></i>
+    <i class="fa-solid fa-camera-viewfinder"></i>
+  </div>
+  <div id="radioBtn">
+    <input type="radio" name="user" value="1" id="me">me
+    <input type="radio" name="user" value="2" id="boss">boss
+  </div>
+  <div id="msgEdit">
+    <textarea name="" id="text" cols="50" rows="3"></textarea>
+    <button id="send"><i class="fas fa-paper-plane"></i> 送信</button>
+
+  </div>
+
+  <!--/ コンテンツ表示画面 -->
+
+
+
+  <!-- JQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <!-- JQuery -->
+
+
+
+  <!--** 以下Firebase **-->
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.8.1/firebase-app.js";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+    import { getDatabase, ref, push, set, onChildAdded, remove, onChildRemoved }
+          from "https://cdnjs.cloudflare.com/ajax/libs/firebase/9.8.1/firebase-database.min.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCPkC9xS8nkveEqyp8o0TyluK77UTidJm4",
+      authDomain: "fir-8c6bb.firebaseapp.com",
+      projectId: "fir-8c6bb",
+      storageBucket: "fir-8c6bb.appspot.com",
+      messagingSenderId: "568260932329",
+      appId: "1:568260932329:web:f5b6c5311195d303573678"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+
+    const db = getDatabase(app); // RealtimeDBに接続
+    const dbRef = ref(db, "chat"); // RealtimeDB内の"chat"を使う
+
+    // 送信処理
+    $("#send").on("click", function() {
+      const msg = {
+        uname: $('input:radio[name="user"]:checked').val(),
+        text: $("#text").val()
+      }
+      const newPostRef = push(dbRef);
+      set(newPostRef, msg);
+    });
+    
+    // データ追加の受信処理
+    onChildAdded(dbRef, function(data){
+      const msg = data.val();
+      const key = data.key;
+      if (msg.uname == 1){
+        let h = `<p  id="${key}" class=' right_balloon'>${msg.text}<i id="${key}" class="fa-solid fa-trash-can clear-right"></i></p>`
+        $("#output").append(h)
+      } else {
+        let h = `<p  id="${key}" class=' left_balloon'><i id="${key}" class="fa-solid fa-trash-can clear-left"></i> ${msg.text}</p>`
+        $("#output").append(h)
+      }
+    });
+
+    // 送信処理(エンターキー)
+    $("#text").on("keydown", function(e) {
+      if (e.keyCode === 13) {
+        const msg = {
+          uname: $('input:radio[name="user"]:checked').val(),
+          text: $("#text").val()
+        }
+        const newPostRef = push(dbRef);
+        set(newPostRef, msg);
+        };
+    });
+
+    // 削除処理(ゴミ箱アイコンクリック→DBからデータを削除)
+    $("#output").on("click", ".fa-trash-can", function(){
+      const thisKey = $(this).attr("id");
+      remove(ref(db, "chat/" + thisKey));
+    });
+
+    // データ削除の受信処理
+    onChildRemoved(dbRef, function(data){
+      const dltKey = "#" + data.key;
+      $(dltKey).remove();
+    });
+
+  </script>
+
+
+</body>
+</html>
